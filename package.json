@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "smartcube-web-bluetooth": "github:poliva/smartcube-web-bluetooth"
+  }
+}

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GAN Cube Type</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./node_modules/rxjs/dist/bundles/rxjs.umd.js"></script>
+    <script src="./node_modules/aes-js/index.js"></script>
+    <script src="./node_modules/lz-string/libs/lz-string.js"></script>
+    <script type="importmap">
+      {
+        "imports": {
+          "rxjs": "./vendor/rxjs-wrapper.mjs",
+          "aes-js": "./vendor/aes-js-wrapper.mjs",
+          "lz-string": "./vendor/lz-string-wrapper.mjs"
+        }
+      }
+    </script>
+  </head>
+  <body>
+    <main class="shell">
+      <section class="hero card">
+        <p class="eyebrow">Smart cube to letters</p>
+        <h1>Type by twisting the cube.</h1>
+        <p class="lead">
+          Connect through the smart cube protocol, then map each move into a
+          letter. Use only quarter turns while typing. <code>U</code> moves
+          forward through the dictionaries, <code>U'</code> moves backward, and
+          the typing orientation is always white on top with green on the front.
+        </p>
+        <div class="actions">
+          <button id="connect-btn">Connect Smart Cube</button>
+          <button id="debug-btn" class="secondary">Raw Debug</button>
+          <button id="disconnect-btn" class="secondary" disabled>
+            Disconnect
+          </button>
+          <button id="clear-btn" class="ghost">Clear Text</button>
+        </div>
+        <div class="mac-tools">
+          <label class="mac-field" for="mac-input">
+            <span>Manual cube MAC</span>
+            <input
+              id="mac-input"
+              type="text"
+              inputmode="text"
+              autocomplete="off"
+              spellcheck="false"
+              placeholder="AA:BB:CC:DD:EE:FF"
+            />
+          </label>
+          <p class="mac-help">
+            Needed when Chrome cannot read the cube MAC automatically. Some smart cubes
+            may require manual MAC entry.
+          </p>
+        </div>
+        <p id="status" class="status">
+          Idle. Open this page in Chrome or Edge, connect the cube, then hold it
+          white-up and green-front before typing.
+        </p>
+      </section>
+
+      <section class="board">
+        <section class="card output-card">
+          <div class="section-label">Output</div>
+          <div class="bank-pill">
+            Active dictionary
+            <span id="bank-name">1 · A-J</span>
+          </div>
+          <div id="typed-output" class="typed-output placeholder">
+            (no letters yet)
+          </div>
+          <div class="last-event">
+            <div>
+              <span class="muted">Last move</span>
+              <strong id="last-move">-</strong>
+            </div>
+            <div>
+              <span class="muted">Last result</span>
+              <strong id="last-result">-</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card orientation-card">
+          <div class="section-label">Typing Orientation</div>
+          <p class="muted-copy">
+            The move map assumes standard cube orientation. If you regrip, bring
+            the cube back to white on top and green facing you.
+          </p>
+          <div class="orientation-diagram">
+            <div class="face-swatch top-face">
+              <span>Top</span>
+              <strong>White</strong>
+            </div>
+            <div class="face-swatch front-face">
+              <span>Front</span>
+              <strong>Green</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-label">Dictionary</div>
+          <div id="mapping-grid" class="mapping-grid"></div>
+          <div class="command-strip">
+            <div><code>U</code> next dictionary</div>
+            <div><code>U'</code> previous dictionary</div>
+            <div>Bank 3: <code>B</code> space</div>
+            <div>Bank 3: <code>B'</code> backspace</div>
+            <div>Bank 3: <code>D</code> period</div>
+            <div>Bank 3: <code>D'</code> comma</div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-label">Move Simulator</div>
+          <p class="muted-copy">
+            Use this before pairing a cube. It runs the same quarter-turn typing
+            logic as live move events.
+          </p>
+          <div id="simulator" class="simulator"></div>
+        </section>
+
+        <section class="card">
+          <div class="section-label">Protocol Debug</div>
+          <p class="muted-copy">
+            If the smart cube does not emit decoded moves, use <code>Raw Debug</code>
+            and make a few turns. The event log will capture raw notification
+            bytes so the protocol can be adapted.
+          </p>
+        </section>
+
+        <section class="card">
+          <div class="section-label">Event Log</div>
+          <ul id="event-log" class="event-log"></ul>
+        </section>
+      </section>
+    </main>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

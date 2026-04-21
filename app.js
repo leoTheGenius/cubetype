@@ -550,26 +550,21 @@ function decryptGanPacket(dataView, aesContext) {
     return null;
   }
 
-  // Copy encrypted bytes
-  const encrypted = new Uint8Array(
-    dataView.buffer.slice(dataView.byteOffset, dataView.byteOffset + dataView.byteLength)
+  const result = new Uint8Array(
+    dataView.buffer.slice(dataView.byteOffset, dataView.byteOffset + dataView.byteLength),
   );
+  const decryptChunk = (offset) => {
+    const cipher = new globalThis.aesjs.ModeOfOperation.cbc(aesContext.key, aesContext.iv);
+    const chunk = cipher.decrypt(result.subarray(offset, offset + 16));
+    result.set(chunk, offset);
+  };
 
-  // Decrypt first 16 bytes
-  const cipher1 = new aesjs.ModeOfOperation.cbc(aesContext.key, aesContext.iv);
-  const block1 = cipher1.decrypt(encrypted.subarray(0, 16));
-  encrypted.set(block1, 0);
-
-  // If packet is 32 bytes, decrypt second block
-  if (encrypted.length > 16) {
-    const cipher2 = new aesjs.ModeOfOperation.cbc(aesContext.key, aesContext.iv);
-    const block2 = cipher2.decrypt(encrypted.subarray(16, 32));
-    encrypted.set(block2, 16);
+  if (result.length > 16) {
+    decryptChunk(result.length - 16);
   }
-
-  return encrypted;
+  decryptChunk(0);
+  return result;
 }
-
 
 function encryptGanPacket(data, aesContext) {
   if (!aesContext || data.length < 16) {
@@ -1375,9 +1370,25 @@ async function requestRawDebugConnection() {
       characteristic.addEventListener("characteristicvaluechanged", onValueChanged);
       state.debugCleanup.push(() => {
         characteristic.removeEventListener("characteristicvaluechanged", onValueChanged);
-      });
+        });
       await characteristic.startNotifications();
       pushLog(`[debug] listening on ${protocol.name} ${characteristic.uuid}`);
+
+      // Also listen on the GAN Gen4 debug characteristic (FFF3) — needed for GAN i4
+      try {
+        const debugChar = await service.getCharacteristic(GAN_ALT_DEBUG_CHARACTERISTIC);
+        await debugChar.startNotifications();
+        debugChar.addEventListener("characteristicvaluechanged", onValueChanged);
+
+        state.debugCleanup.push(() => {
+          debugChar.removeEventListener("characteristicvaluechanged", onValueChanged);
+        });
+
+        pushLog(`[debug] listening on GAN Gen4 debug ${GAN_ALT_DEBUG_CHARACTERISTIC}`);
+      } catch (err) {
+        pushLog(`[debug] no debug characteristic available: ${formatError(err)}`);
+}
+
     }
     break;
   }
